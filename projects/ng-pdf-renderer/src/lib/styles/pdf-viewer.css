@@ -1,0 +1,118 @@
+/* PDF.js Text Layer Styles - Required for proper text alignment */
+
+/* Import PDF.js viewer styles */
+@import 'pdfjs-dist/web/pdf_viewer.css';
+
+/* CRITICAL: Override PDF.js styles with maximum specificity */
+.pdf-container .textLayer,
+.pdf-viewer .textLayer,
+.pdf-content .textLayer,
+.pdf-page .textLayer,
+div.textLayer {
+  position: absolute !important;
+  text-align: initial !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  overflow: hidden !important;
+  opacity: 0.25 !important;
+  line-height: 1 !important;
+  -webkit-text-size-adjust: none !important;
+  -moz-text-size-adjust: none !important;
+  -ms-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+  forced-color-adjust: none !important;
+  transform-origin: 0 0 !important;
+  /* MAXIMUM z-index to override PDF.js defaults */
+  z-index: 10 !important;
+  /* CRITICAL: Must be auto for text selection to work */
+  pointer-events: auto !important;
+}
+
+/* Additional text layer overrides */
+.textLayer {
+  z-index: 10 !important;
+  pointer-events: auto !important;
+}
+
+.textLayer span,
+.textLayer br {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+/* Show text selection */
+.textLayer ::selection {
+  background: rgba(0, 0, 255, 0.3);
+}
+
+.textLayer ::-moz-selection {
+  background: rgba(0, 0, 255, 0.3);
+}
+
+/* Hide the text but make it selectable */
+.textLayer .highlight {
+  margin: -1px;
+  padding: 1px;
+  background-color: rgba(180, 0, 170, 0.4);
+  border-radius: 4px;
+}
+
+.textLayer .highlight.appended {
+  position: initial;
+}
+
+.textLayer .highlight.begin {
+  border-radius: 4px 0 0 4px;
+}
+
+.textLayer .highlight.end {
+  border-radius: 0 4px 4px 0;
+}
+
+.textLayer .highlight.middle {
+  border-radius: 0;
+}
+
+.textLayer .highlight.selected {
+  background-color: rgba(0, 100, 0, 0.4);
+}
+
+/* Ensure proper stacking */
+.pdf-page {
+  position: relative;
+}
+
+.pdf-page canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.annotationLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+}
+
+/* Fix for high DPI displays */
+@media print {
+  .textLayer {
+    display: none;
+  }
+}
+
+/* Ensure text layer doesn't interfere with canvas on mobile */
+@media (max-width: 768px) {
+  .textLayer {
+    opacity: 0.2;
+  }
+}

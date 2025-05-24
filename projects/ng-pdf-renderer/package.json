@@ -1,0 +1,20 @@
+{
+  "name": "ng-pdf-renderer",
+  "version": "1.0.0",
+  "description": "A PDF renderer for Angular applications using PDF.js",
+  "keywords": ["angular", "pdf", "viewer", "renderer", "pdf.js"],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ng-pdf-renderer"
+  },
+  "peerDependencies": {
+    "@angular/common": "^19.1.0",
+    "@angular/core": "^19.1.0"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174",
+    "tslib": "^2.3.0"
+  }
+}
