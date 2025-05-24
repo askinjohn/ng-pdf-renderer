@@ -1,13 +1,17 @@
 {
   "name": "ng-pdf-renderer",
   "version": "1.0.0",
-  "description": "A PDF renderer for Angular applications using PDF.js",
-  "keywords": ["angular", "pdf", "viewer", "renderer", "pdf.js"],
-  "author": "Your Name",
+  "description": "A simple PDF viewer for Angular applications with zero configuration required",
+  "keywords": ["angular", "pdf", "viewer", "renderer", "pdf.js", "angular19"],
+  "author": "askinjohn",
   "license": "MIT",
+  "homepage": "https://github.com/askinjohn/ng-pdf-renderer#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/ng-pdf-renderer"
+    "url": "https://github.com/askinjohn/ng-pdf-renderer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/askinjohn/ng-pdf-renderer/issues"
   },
   "peerDependencies": {
     "@angular/common": "^19.1.0",
