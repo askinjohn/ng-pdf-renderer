@@ -1,6 +1,6 @@
 {
   "name": "ng-pdf-renderer",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A simple PDF viewer for Angular applications with zero configuration required",
   "keywords": ["angular", "pdf", "viewer", "renderer", "pdf.js", "angular19","ng-pdf","ng2-pdf,ng,pdf"],
   "author": "askinjohn",
