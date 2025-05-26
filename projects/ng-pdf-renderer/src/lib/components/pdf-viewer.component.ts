@@ -91,10 +91,13 @@ import * as pdfjsLib from 'pdfjs-dist';
     .pdf-content {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      justify-content: flex-start;
       transition: transform 0.3s ease;
       width: 100%;
-      padding: 20px 0;
+      min-height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-x: auto; /* Allow horizontal scrolling if needed */
     }
     
     /* Loading and error message styling */
@@ -296,10 +299,9 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
       this.zoom.set(this.options.initialZoom);
       this.pdfService.setZoom(this.options.initialZoom);
     } else {
-      // Default to a higher zoom level (2.0 = 200%) to better fit screens
-      // This seems to work better on modern high-DPI displays
-      this.zoom.set(2.0);
-      this.pdfService.setZoom(2.0);
+      // Default to 1.0 (100%) - let autoFit handle the scaling if needed
+      this.zoom.set(1.0);
+      this.pdfService.setZoom(1.0);
     }
     
     if (this.options?.initialPage) {
@@ -540,23 +542,26 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
         //console.log('Page width at scale 1.0:', pageWidth);
         //console.log('Container width:', containerWidth);
         
-        // Calculate scale to fit container width (with some margin)
-        const scaleFactor = Math.max((containerWidth - 40) / pageWidth, 1.5);
+        // Calculate scale to fit container width (with some margin) - FIXED: No minimum zoom restriction
+        const scaleFactor = (containerWidth - 40) / pageWidth;
         
-        //console.log('Calculated scale factor:', scaleFactor);
+        // Apply reasonable bounds to prevent extreme scaling
+        const boundedScale = Math.max(0.1, Math.min(scaleFactor, 3.0));
         
-        // Only update if significantly different from current zoom
-        if (Math.abs(scaleFactor - this.zoom()) > 0.05) {
-          //console.log(`Auto-fitting: scaling to ${scaleFactor.toFixed(2)}`);
-          this.zoom.set(scaleFactor);
-          this.pdfService.setZoom(scaleFactor);
+        //console.log('Calculated scale factor:', boundedScale);
+        
+        // Only update if significantly different from current zoom (increased threshold to prevent loops)
+        if (Math.abs(boundedScale - this.zoom()) > 0.1) {
+          //console.log(`Auto-fitting: scaling to ${boundedScale.toFixed(2)}`);
+          this.zoom.set(boundedScale);
+          this.pdfService.setZoom(boundedScale);
         }
       }
     } catch (err) {
       //console.error('Error in auto-scaling:', err);
-      // Set a safe default zoom level if auto-scaling fails
-      this.zoom.set(1.5);
-      this.pdfService.setZoom(1.5);
+      // Set a reasonable default zoom level if auto-scaling fails
+      this.zoom.set(1.0);
+      this.pdfService.setZoom(1.0);
     }
     
     const totalPages = pdfDocument.numPages;
@@ -581,15 +586,16 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
           rotation: this.rotation() 
         });
         
-        // Create page container with margin
+        // Create page container with better centering
         const pageContainer = document.createElement('div');
         pageContainer.className = 'pdf-page';
-        pageContainer.style.margin = '10px 0';
+        pageContainer.style.margin = '10px auto'; // Auto margins for centering
         pageContainer.style.position = 'relative';
         pageContainer.style.overflow = 'hidden'; // Prevent overflow issues
         pageContainer.style.backgroundColor = '#fff'; // Add white background
         pageContainer.style.width = Math.floor(viewport.width) + 'px';
         pageContainer.style.height = Math.floor(viewport.height) + 'px';
+        pageContainer.style.display = 'block';
         pageContainer.setAttribute('data-page-number', pageNumber.toString());
         
         // Create canvas for this page

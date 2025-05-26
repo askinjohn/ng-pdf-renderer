@@ -1,193 +1,117 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PdfViewerComponent, PdfOptions } from 'ng-pdf-renderer';
+import { RouterOutlet, RouterLink, Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, PdfViewerComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink],
   template: `
-    <div class="container">
-      <h1>PDF Viewer Test App</h1>
+    <div class="app-container">
+      <nav class="navigation">
+        <h1>🔬 ng-pdf-renderer Test Suite</h1>
+        <div class="nav-buttons">
+          <button 
+            [class.active]="isActiveRoute('/simple')"
+            (click)="navigate('/simple')"
+            class="nav-btn">
+            Simple Test
+          </button>
+          <button 
+            [class.active]="isActiveRoute('/npm')"
+            (click)="navigate('/npm')"
+            class="nav-btn">
+            NPM Package Test
+          </button>
+          <button 
+            [class.active]="isActiveRoute('/clean')"
+            (click)="navigate('/clean')"
+            class="nav-btn">
+            Clean Test
+          </button>
+        </div>
+        <p class="description">Choose a test to see ng-pdf-renderer in action with default settings</p>
+      </nav>
       
-      <div class="controls">
-        <h3>Test Controls</h3>
-        <button (click)="loadSamplePdf()">Load Sample PDF</button>
-        <button (click)="loadAnotherPdf()">Load Another PDF</button>
-        <label>
-          PDF Height:
-          <select (change)="updateHeight($event)">
-            <option value="400px">400px</option>
-            <option value="600px" selected>600px</option>
-            <option value="800px">800px</option>
-            <option value="100vh">Full Height</option>
-          </select>
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" [checked]="pdfOptions.showControls" (change)="toggleControls($event)">
-          Show Controls
-        </label>
-      </div>
-      
-      <div class="pdf-container">
-        <ng-pdf-viewer 
-          [src]="pdfSrc" 
-          [options]="pdfOptions"
-          (pageChange)="onPageChange($event)"
-          (documentLoaded)="onDocumentLoaded($event)"
-          (documentLoadError)="onDocumentLoadError($event)">
-        </ng-pdf-viewer>
-      </div>
-      
-      <div class="status">
-        <p *ngIf="status">Status: {{ status }}</p>
-        <p *ngIf="error" class="error">Error: {{ error }}</p>
-      </div>
+      <main class="content">
+        <router-outlet></router-outlet>
+      </main>
     </div>
   `,
   styles: [`
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      font-family: Arial, sans-serif;
+    .app-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
     
-    h1 {
-      color: #2c3e50;
+    .navigation {
+      background: white;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       text-align: center;
     }
     
-    .controls {
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: #f8f9fa;
-      border-radius: 5px;
+    .navigation h1 {
+      color: #2c3e50;
+      margin-bottom: 15px;
     }
     
-    button {
-      margin-right: 10px;
-      padding: 8px 16px;
-      background-color: #3498db;
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    
+    .nav-btn {
+      padding: 12px 24px;
+      border: 2px solid #3498db;
+      background: white;
+      color: #3498db;
+      border-radius: 25px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-btn:hover {
+      background: #3498db;
       color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      transform: translateY(-2px);
     }
     
-    button:hover {
-      background-color: #2980b9;
+    .nav-btn.active {
+      background: #2980b9;
+      color: white;
+      border-color: #2980b9;
     }
     
-    label {
-      margin-left: 20px;
+    .description {
+      color: #666;
+      margin: 0;
+      font-style: italic;
     }
     
-    .checkbox-label {
-      display: inline-flex;
-      align-items: center;
-      margin-left: 20px;
-      cursor: pointer;
+    .content {
+      padding: 0;
     }
     
-    .checkbox-label input[type="checkbox"] {
-      margin-right: 6px;
-    }
-    
-    select {
-      margin-left: 10px;
-      padding: 6px;
-    }
-    
-    .pdf-container {
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-    
-    .status {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #f8f9fa;
-      border-radius: 5px;
-    }
-    
-    .error {
-      color: #e74c3c;
+    @media (max-width: 768px) {
+      .nav-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   `]
 })
 export class AppComponent {
-  // PDF source URL
-  pdfSrc: string = '/assets/Terminal_agreement.pdf';
+  constructor(private router: Router) {}
   
-  // PDF viewer options
-  pdfOptions: PdfOptions = {
-    height: '600px',
-    width: '100%',
-    // No need to set initialZoom now that we have auto-fit
-    autoFit: true,
-    initialZoom:1.0,
-    showControls: false, // Default is now false
-    showNavigation: true,
-    showZoomControls: true,
-    showRotationControls: true,
-    showDownloadButton: true,
-    showPrintButton: true,
-    showSearchBar: true,
-    enableTextSelection: true
-  };
-  
-  // Status information
-  status: string = '';
-  error: string = '';
-  
-  // Load the default sample PDF
-  loadSamplePdf(): void {
-    this.pdfSrc = 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf';
-    this.status = 'Loading sample PDF...';
-    this.error = '';
+  navigate(route: string) {
+    this.router.navigate([route]);
   }
   
-  // Load another sample PDF
-  loadAnotherPdf(): void {
-    this.pdfSrc = 'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf';
-    this.status = 'Loading another PDF...';
-    this.error = '';
-  }
-  
-  // Update PDF viewer height
-  updateHeight(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.pdfOptions = {
-      ...this.pdfOptions,
-      height: select.value
-    };
-    this.status = `Height updated to ${select.value}`;
-  }
-  
-  // Event handlers
-  onPageChange(pageNumber: number): void {
-    this.status = `Navigated to page ${pageNumber}`;
-  }
-  
-  onDocumentLoaded(document: any): void {
-    this.status = `PDF loaded successfully with ${document.numPages} pages`;
-    this.error = '';
-  }
-  
-  onDocumentLoadError(error: any): void {
-    this.error = `Failed to load PDF: ${error.message || 'Unknown error'}`;
-    this.status = '';
-  }
-
-  // Toggle PDF controls visibility
-  toggleControls(event: Event): void {
-    const checkbox = event.target as HTMLInputElement;
-    this.pdfOptions = {
-      ...this.pdfOptions,
-      showControls: checkbox.checked
-    };
-    this.status = `Controls ${checkbox.checked ? 'shown' : 'hidden'}`;
+  isActiveRoute(route: string): boolean {
+    return this.router.url === route;
   }
 }

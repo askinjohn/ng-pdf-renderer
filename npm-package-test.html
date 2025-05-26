@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ng-pdf-renderer NPM Package Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .instructions {
+            background: #e8f4fd;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin-bottom: 20px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .test-container {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafafa;
+        }
+        
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; }
+        h3 { color: #7f8c8d; }
+        
+        .highlight { 
+            background: #fff3cd; 
+            padding: 2px 4px; 
+            border-radius: 3px; 
+        }
+        
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 ng-pdf-renderer NPM Package Test</h1>
+        <p>Testing the <span class="highlight">ng-pdf-renderer</span> package with default settings</p>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Test Instructions</h2>
+        <div class="instructions">
+            <strong>Goal:</strong> Test the ng-pdf-renderer package using only default settings to see how it renders out of the box.
+        </div>
+        
+        <h3>Step 1: Install the Package</h3>
+        <div class="code-block">
+npm install ng-pdf-renderer
+        </div>
+        
+        <h3>Step 2: Create Angular Component</h3>
+        <div class="code-block">
+import { Component } from '@angular/core';
+import { PdfViewerComponent } from 'ng-pdf-renderer';
+
+@Component({
+  selector: 'app-pdf-test',
+  standalone: true,
+  imports: [PdfViewerComponent],
+  template: `
+    &lt;div class="test-container"&gt;
+      &lt;h3&gt;Default ng-pdf-renderer Test&lt;/h3&gt;
+      &lt;ng-pdf-viewer [src]="pdfUrl"&gt;&lt;/ng-pdf-viewer&gt;
+    &lt;/div&gt;
+  `
+})
+export class PdfTestComponent {
+  pdfUrl = '/assets/sample.pdf';
+}
+        </div>
+        
+        <h3>Step 3: Expected Default Behavior</h3>
+        <ul>
+            <li><strong>Height:</strong> 500px</li>
+            <li><strong>Width:</strong> 100% of container</li>
+            <li><strong>Controls:</strong> Hidden (showControls = false)</li>
+            <li><strong>Auto-fit:</strong> Enabled (scales to fit width)</li>
+            <li><strong>Text Selection:</strong> Enabled</li>
+            <li><strong>All other features:</strong> Package defaults</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Interactive Test</h2>
+        <p>Once you implement the component above, you should see:</p>
+        
+        <div class="test-container">
+            <h3>Expected Result Preview</h3>
+            <div style="border: 1px solid #ddd; height: 500px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #666;">
+                📄 Your PDF should render here with default settings<br>
+                • Height: 500px<br>
+                • Auto-scaled to fit width<br>
+                • Text selectable<br>
+                • No visible controls
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Testing Checklist</h2>
+        <p>After implementing, verify these behaviors:</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <h4>Visual Tests:</h4>
+                <ul>
+                    <li>□ PDF renders at 500px height</li>
+                    <li>□ PDF scales to fit container width</li>
+                    <li>□ No control buttons visible</li>
+                    <li>□ Clean, professional appearance</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4>Interaction Tests:</h4>
+                <ul>
+                    <li>□ Text can be selected</li>
+                    <li>□ Page scrolls smoothly</li>
+                    <li>□ Responsive on mobile</li>
+                    <li>□ No console errors</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Quick Questions</h2>
+        <p>After testing, consider these questions:</p>
+        <ol>
+            <li><strong>Are the defaults good for most use cases?</strong></li>
+            <li><strong>Should the default height be different?</strong></li>
+            <li><strong>Is auto-fit working well on different screen sizes?</strong></li>
+            <li><strong>Would users expect controls to be visible by default?</strong></li>
+        </ol>
+    </div>
+</body>
+</html>

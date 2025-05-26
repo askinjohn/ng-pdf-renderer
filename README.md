@@ -1,134 +1,68 @@
-# ng-pdf-renderer
+# ng-pdf-renderer 📄
 
-A simple PDF viewer for Angular applications with zero configuration required.
+A modern, zero-configuration PDF viewer for Angular applications with intelligent auto-fit, text selection, and responsive design.
 
-## Features
+[![npm version](https://badge.fury.io/js/ng-pdf-renderer.svg)](https://badge.fury.io/js/ng-pdf-renderer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Angular](https://img.shields.io/badge/Angular-19+-red.svg)](https://angular.io/)
 
-- ✅ **Zero setup** - No manual PDF.js worker configuration needed
-- ✅ **Text selection** - Select and copy text from PDFs
-- ✅ **Search** - Find text across all pages
-- ✅ **Controls** - Optional navigation, zoom, print, and download
-- ✅ **Responsive** - Auto-fits container width
-- ✅ **Modern Angular** - Built with Angular 19 standalone components
-
-## Installation
+## 🚀 Quick Start
 
 ```bash
 npm install ng-pdf-renderer
 ```
-
-## Basic Usage
 
 ```typescript
 import { Component } from '@angular/core';
 import { PdfViewerComponent } from 'ng-pdf-renderer';
 
 @Component({
+  selector: 'app-pdf-demo',
   standalone: true,
   imports: [PdfViewerComponent],
-  template: `
-    <ng-pdf-viewer [src]="pdfUrl"></ng-pdf-viewer>
-  `
+  template: `<ng-pdf-viewer [src]=\"pdfUrl\"></ng-pdf-viewer>`
 })
-export class MyComponent {
+export class PdfDemoComponent {
   pdfUrl = '/assets/document.pdf';
 }
 ```
 
-## With Controls
+## ✨ Features
 
-```typescript
-import { PdfViewerComponent, PdfOptions } from 'ng-pdf-renderer';
+- 🚀 **Zero Configuration** - Works out of the box
+- 📱 **Auto-Fit & Responsive** - Adapts to any container size  
+- 📝 **Text Selection** - Copy text directly from PDFs
+- 🔍 **Search, Print, Download** - Built-in functionality
+- 🎯 **Modern Angular** - Standalone components, Angular 19+
+- 🛠️ **Auto PDF.js Setup** - No manual configuration needed
 
-@Component({
-  template: `
-    <ng-pdf-viewer 
-      [src]="pdfUrl" 
-      [options]="options">
-    </ng-pdf-viewer>
-  `
-})
-export class MyComponent {
-  pdfUrl = 'https://example.com/document.pdf';
-  
-  options: PdfOptions = {
-    height: '600px',
-    showControls: true
-  };
-}
+## 📚 Documentation
+
+For complete documentation, examples, and configuration options, see the [full README](./projects/ng-pdf-renderer/README.md).
+
+## 🏗️ Development
+
+This repository contains:
+
+- **Library**: `./projects/ng-pdf-renderer/` - The npm package source
+- **Test App**: `./projects/pdf-test-app/` - Development testing application
+
+### Build & Test
+
+```bash
+# Install dependencies
+npm install
+
+# Build the library
+ng build ng-pdf-renderer
+
+# Run test application
+ng serve pdf-test-app
+
+# Publish to npm
+npm publish dist/ng-pdf-renderer
 ```
 
-## Configuration Options
+## 📄 License
 
-```typescript
-interface PdfOptions {
-  // Display
-  height?: string;              // Container height (default: '500px')
-  width?: string;               // Container width (default: '100%')
-  
-  // Controls
-  showControls?: boolean;       // Show control bar (default: false)
-  showNavigation?: boolean;     // Page navigation buttons
-  showZoomControls?: boolean;   // Zoom in/out buttons
-  showDownloadButton?: boolean; // Download button
-  showPrintButton?: boolean;    // Print button
-  showSearchBar?: boolean;      // Search functionality
-  
-  // View
-  initialZoom?: number;         // Starting zoom level (default: auto-fit)
-  initialPage?: number;         // Starting page (default: 1)
-  enableTextSelection?: boolean; // Allow text selection (default: true)
-}
-```
-
-## Events
-
-```typescript
-@Component({
-  template: `
-    <ng-pdf-viewer 
-      [src]="pdfUrl"
-      (pageChange)="onPageChange($event)"
-      (documentLoaded)="onDocumentLoaded($event)">
-    </ng-pdf-viewer>
-  `
-})
-export class MyComponent {
-  onPageChange(page: number) {
-    console.log('Current page:', page);
-  }
-  
-  onDocumentLoaded(doc: any) {
-    console.log('PDF loaded with', doc.numPages, 'pages');
-  }
-}
-```
-
-## Loading Different PDF Sources
-
-```typescript
-// From URL
-pdfUrl = 'https://example.com/document.pdf';
-
-// From assets
-pdfUrl = '/assets/document.pdf';
-
-// From file upload
-onFileSelected(event: any) {
-  const file = event.target.files[0];
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    this.pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-  };
-  reader.readAsArrayBuffer(file);
-}
-```
-
-## Requirements
-
-- Angular 19+
-- Modern browsers with ES2022 support
-
-## License
-
-MIT
+MIT © [askinjohn](https://github.com/askinjohn)
