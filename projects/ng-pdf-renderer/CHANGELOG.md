@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — 2.0.0
+
+- Breaking: target Angular 22.2 and PDF.js 6; Angular 19 consumers must stay on the previous release.
+- Upgrade workspace tooling to current Angular builders, TypeScript 6.0, and browser-based Vitest.
+- Isolate viewer state; handle source replacement, cancellation, observer cleanup, manual zoom, resize, and rotation.
+- Migrate text/annotation rendering APIs; resolve internal destinations correctly and keep links clickable above selectable text.
+- Validate navigation inputs and ignore stale searches; add real-PDF browser regression coverage.
+- Add lazy thumbnail previews, nested bookmarks, and toolbar panel toggles.
+- Add AcroForm widgets with persisted edits in downloads/printing and password retry/cancellation prompts.
+- Preserve form edits on option changes and isolate field DOM identifiers across viewers.
+
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

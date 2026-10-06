@@ -12,24 +12,24 @@ import { FormsModule } from '@angular/forms';
   template: `
     <div class="pdf-controls">
       <!-- Page navigation controls -->
-      <div class="pdf-navigation" *ngIf="showNavigation">
-        <button (click)="onFirstPage()" [disabled]="currentPage <= 1">First</button>
-        <button (click)="onPreviousPage()" [disabled]="currentPage <= 1">Previous</button>
+      @if (showNavigation) { <div class="pdf-navigation">
+        <button type="button" (click)="onFirstPage()" [disabled]="currentPage <= 1">First</button>
+        <button type="button" (click)="onPreviousPage()" [disabled]="currentPage <= 1">Previous</button>
         <span class="page-info">
           <!-- Page input with two-way binding -->
-          <input type="number" [ngModel]="currentPage" (ngModelChange)="onPageInputChange($event)" min="1" [max]="totalPages">
+          <input aria-label="Page number" type="number" [ngModel]="currentPage" (ngModelChange)="onPageInputChange($event)" min="1" [max]="totalPages">
           / {{ totalPages }}
         </span>
-        <button (click)="onNextPage()" [disabled]="currentPage >= totalPages">Next</button>
-        <button (click)="onLastPage()" [disabled]="currentPage >= totalPages">Last</button>
-      </div>
+        <button type="button" (click)="onNextPage()" [disabled]="currentPage >= totalPages">Next</button>
+        <button type="button" (click)="onLastPage()" [disabled]="currentPage >= totalPages">Last</button>
+      </div> }
       
       <!-- Zoom controls -->
-      <div class="pdf-zoom" *ngIf="showZoomControls">
-        <button (click)="onZoomOut()">-</button>
+      @if (showZoomControls) { <div class="pdf-zoom">
+        <button type="button" aria-label="Zoom out" (click)="onZoomOut()">-</button>
         <span>{{ (zoom * 100).toFixed(0) }}%</span>
-        <button (click)="onZoomIn()">+</button>
-        <select [ngModel]="zoom" (ngModelChange)="onZoomSelect($event)">
+        <button type="button" aria-label="Zoom in" (click)="onZoomIn()">+</button>
+        <select aria-label="Zoom" [ngModel]="zoom" (ngModelChange)="onZoomSelect($event)">
           <option [value]="0.5">50%</option>
           <option [value]="0.75">75%</option>
           <option [value]="1">100%</option>
@@ -37,79 +37,46 @@ import { FormsModule } from '@angular/forms';
           <option [value]="1.5">150%</option>
           <option [value]="2">200%</option>
         </select>
-      </div>
+      </div> }
       
       <!-- Rotation controls -->
-      <div class="pdf-rotation" *ngIf="showRotationControls">
-        <button (click)="onRotateLeft()">↺</button>
-        <button (click)="onRotateRight()">↻</button>
-      </div>
+      @if (showRotationControls) { <div class="pdf-rotation">
+        <button type="button" aria-label="Rotate left" (click)="onRotateLeft()">↺</button>
+        <button type="button" aria-label="Rotate right" (click)="onRotateRight()">↻</button>
+      </div> }
       
       <!-- Action buttons -->
       <div class="pdf-actions">
-        <button *ngIf="showDownloadButton" (click)="onDownload()">Download</button>
-        <button *ngIf="showPrintButton" (click)="onPrint()">Print</button>
+        @if (showDownloadButton) { <button type="button" (click)="onDownload()">Download</button> }
+        @if (showPrintButton) { <button type="button" (click)="onPrint()">Print</button> }
       </div>
       
-      <!-- Search functionality -->
-      <div class="pdf-search" *ngIf="showSearchBar">
-        <input type="text" placeholder="Search..." #searchInput>
-        <button (click)="onSearch(searchInput.value)">Search</button>
+      <div class="pdf-panels">
+        <button type="button" [attr.aria-pressed]="showThumbnails" (click)="toggleThumbnails.emit(!showThumbnails)">Thumbnails</button>
+        <button type="button" [attr.aria-pressed]="showOutline" (click)="toggleOutline.emit(!showOutline)">Bookmarks</button>
       </div>
+      <!-- Search functionality -->
+      @if (showSearchBar) { <div class="pdf-search">
+        <input aria-label="Search PDF" type="text" placeholder="Search document…" #searchInput (keydown.enter)="onSearch(searchInput.value)">
+        <button type="button" (click)="onSearch(searchInput.value)">Search</button>
+      </div> }
     </div>
   `,
   styles: [`
-    /* Control bar container */
-    .pdf-controls {
-      display: flex;
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    
-    /* Control groups */
-    .pdf-navigation, .pdf-zoom, .pdf-rotation, .pdf-actions, .pdf-search {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    
-    /* Button styling */
-    button {
-      padding: 4px 8px;
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    
-    button:hover {
-      background: #e0e0e0;
-    }
-    
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    /* Form control styling */
-    input[type="number"], input[type="text"] {
-      width: 50px;
-      padding: 4px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
-    
-    input[type="text"] {
-      width: 150px;
-    }
-    
-    select {
-      padding: 4px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
+    :host { display:block; color:#1e293b; font:14px/1.4 system-ui, sans-serif; }
+    .pdf-controls { display:flex; flex-wrap:wrap; gap:10px; padding:12px; background:#fff; border-bottom:1px solid #e2e8f0; }
+    .pdf-navigation, .pdf-zoom, .pdf-rotation, .pdf-actions, .pdf-panels, .pdf-search { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .page-info { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+    button, input, select { box-sizing:border-box; min-height:36px; font:inherit; border:1px solid #cbd5e1; border-radius:6px; color:inherit; background:#fff; }
+    button { padding:6px 10px; cursor:pointer; }
+    button:hover:not(:disabled) { background:#f1f5f9; border-color:#94a3b8; }
+    button[aria-pressed="true"] { background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
+    button:disabled { color:#64748b; background:#f8fafc; cursor:default; }
+    input, select { padding:6px; }
+    input[type="number"] { width:58px; }
+    input[type="text"] { width:170px; max-width:100%; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid #2563eb; outline-offset:2px; }
+    @media (max-width:600px) { .pdf-controls { padding:8px; gap:8px; } button { min-height:40px; } .pdf-search { width:100%; } .pdf-search input { flex:1; min-width:0; } }
   `]
 })
 export class PdfControlsComponent {
@@ -176,7 +143,7 @@ export class PdfControlsComponent {
    * @param page The new page number
    */
   onPageInputChange(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
+    if (Number.isInteger(page) && page >= 1 && page <= this.totalPages) {
       this.pageChange.emit(page);
     }
   }

@@ -7,8 +7,9 @@ export interface PdfOptions {
   width?: string;              // Width of the PDF viewer container (e.g., '100%', '800px')
   
   // Rendering options
+  renderForms?: boolean;         // Enable interactive AcroForm widgets (default: true)
   renderTextLayer?: boolean;     // Whether to render the text layer (enables text selection and search)
-  renderAnnotationLayer?: boolean; // Whether to render annotations (comments, form fields, etc.)
+  renderAnnotationLayer?: boolean; // Whether to render link annotations and AcroForm widgets
   
   // View options
   initialZoom?: number;        // Initial zoom level (e.g., 1 = 100%, 1.5 = 150%)
@@ -23,10 +24,21 @@ export interface PdfOptions {
   showDownloadButton?: boolean; // Whether to show the download button
   showPrintButton?: boolean;   // Whether to show the print button
   showSearchBar?: boolean;     // Whether to show the search functionality
-  showThumbnails?: boolean;    // Whether to show page thumbnails
-  showOutline?: boolean;       // Whether to show document outline/bookmarks
+  showThumbnails?: boolean;    // Show a panel with lazy page thumbnails
+  showOutline?: boolean;       // Show document bookmarks with nested navigation
   enableTextSelection?: boolean; // Whether to allow text selection in the document
 
   // Advanced options (automatically configured, only set if you need to override)
-  workerSrc?: string;          // Path to pdf.worker.js file (automatically detected or uses CDN)
+  workerSrc?: string;          // Path to a matching pdf.worker.mjs file (automatically detected or uses CDN)
+}
+
+export interface PdfOutlineItem {
+  title: string;
+  dest: string | unknown[] | null;
+  url?: string | null;
+  items: PdfOutlineItem[];
+}
+
+export interface PdfPasswordRequest {
+  incorrect: boolean;
 }
