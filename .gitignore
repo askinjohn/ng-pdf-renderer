@@ -155,3 +155,5 @@ debug-*.html
 .DS_Store?
 ehthumbs.db
 Icon?
+# Browser test artifacts
+/.vitest/

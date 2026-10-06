@@ -1,324 +1,139 @@
-# ng-pdf-renderer 📄
+# ng-pdf-renderer
 
-A modern, zero-configuration PDF viewer for Angular applications with intelligent auto-fit, text selection, and responsive design.
+A standalone Angular PDF viewer backed by PDF.js. This workspace targets Angular 22 and PDF.js 6. The upgrade is unreleased and requires a major package release because Angular 19 applications cannot use this build.
 
-[![npm version](https://badge.fury.io/js/ng-pdf-renderer.svg)](https://badge.fury.io/js/ng-pdf-renderer)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Angular](https://img.shields.io/badge/Angular-19+-red.svg)](https://angular.io/)
+## Installation
 
-## ✨ Features
+For published releases, use `npm install ng-pdf-renderer` and check that release's Angular peer dependencies. This README describes unreleased source version 2.0.0. To try it locally, build the repository with `npm run build` and install its `dist/ng-pdf-renderer` directory into an Angular 22 application.
 
-- 🚀 **Zero Configuration** - Works out of the box with sensible defaults
-- 📱 **Responsive Design** - Auto-fits to any container size
-- 📝 **Text Selection** - Copy text directly from PDFs
-- 🔍 **Search Functionality** - Find text within documents
-- 🖨️ **Print & Download** - Built-in actions
-- 🔄 **Zoom & Rotation** - Interactive controls
-- 📄 **Continuous Scrolling** - All pages rendered seamlessly
-- 🎯 **Modern Angular** - Standalone components, signals, Angular 19+
-- 🛠️ **Auto PDF.js Setup** - No manual worker configuration needed
-
-## 📦 Installation
-
-```bash
-npm install ng-pdf-renderer
-```
-
-## 🚀 Quick Start
-
-### Basic Usage (Recommended)
-
-```typescript
-import { Component } from '@angular/core';
-import { PdfViewerComponent } from 'ng-pdf-renderer';
-
-@Component({
-  selector: 'app-pdf-demo',
-  standalone: true,
-  imports: [PdfViewerComponent],
-  template: `
-    <ng-pdf-viewer [src]=\"pdfUrl\"></ng-pdf-viewer>
-  `
-})
-export class PdfDemoComponent {
-  pdfUrl = '/assets/document.pdf';
-}
-```
-
-That's it! The PDF viewer will automatically:
-- Fit the PDF to your container width
-- Enable text selection
-- Handle high-DPI displays
-- Set up PDF.js worker automatically
-
-## ⚙️ Configuration Options
-
-### Default Values (Applied Automatically)
-
-```typescript
-interface PdfOptions {
-  // Display Options
-  height?: string;                    // Default: '500px'
-  width?: string;                     // Default: '100%'
-  
-  // Auto-Fit Behavior  
-  autoFit?: boolean;                  // Default: true
-  initialZoom?: number;               // Default: 1.0 (100%)
-  initialPage?: number;               // Default: 1
-  
-  // Text & Interaction
-  enableTextSelection?: boolean;      // Default: true
-  renderTextLayer?: boolean;          // Default: true
-  renderAnnotationLayer?: boolean;    // Default: true
-  
-  // Controls Visibility
-  showControls?: boolean;             // Default: false (hidden)
-  showNavigation?: boolean;           // Default: true
-  showZoomControls?: boolean;         // Default: true
-  showRotationControls?: boolean;     // Default: true
-  showDownloadButton?: boolean;       // Default: true
-  showPrintButton?: boolean;          // Default: true
-  showSearchBar?: boolean;            // Default: true
-  showThumbnails?: boolean;           // Default: false
-  showOutline?: boolean;              // Default: false
-}
-```
-
-### Custom Configuration Example
+## Usage
 
 ```typescript
 import { Component } from '@angular/core';
 import { PdfViewerComponent, PdfOptions } from 'ng-pdf-renderer';
 
 @Component({
-  selector: 'app-custom-pdf',
-  standalone: true,
+  selector: 'app-document',
   imports: [PdfViewerComponent],
-  template: `
-    <ng-pdf-viewer 
-      [src]=\"pdfUrl\" 
-      [options]=\"pdfOptions\"
-      (pageChange)=\"onPageChange($event)\"
-      (documentLoaded)=\"onDocumentLoaded($event)\">
-    </ng-pdf-viewer>
-  `
+  template: `<ng-pdf-viewer [src]="source" [options]="options"
+    (documentLoadError)="onError($event)" />`
 })
-export class CustomPdfComponent {
-  pdfUrl = '/assets/document.pdf';
-  
-  pdfOptions: PdfOptions = {
-    height: '800px',
-    showControls: true,        // Show control bar
-    initialZoom: 1.2,          // 120% zoom
-    autoFit: false,            // Disable auto-fit
-    showThumbnails: true       // Show thumbnail panel
-  };
-  
-  onPageChange(page: number) {
-    console.log('Current page:', page);
-  }
-  
-  onDocumentLoaded(document: any) {
-    console.log('PDF loaded:', document.numPages, 'pages');
-  }
+export class DocumentComponent {
+  source: string | Uint8Array = '/assets/document.pdf';
+  options: PdfOptions = { height: '600px', showControls: true, showThumbnails: true, showOutline: true };
+  onError(error: unknown) { console.error(error); }
 }
 ```
 
-## 🎯 Auto-Fit vs Manual Zoom Controls
+Each viewer owns its document, navigation, zoom, and rotation state. Replacing `src` reloads the document; use a new options object when changing settings. URL sources require appropriate CORS headers. Binary data is copied before being passed to PDF.js so the caller's buffer remains usable.
 
-### How Auto-Fit Works
+## Implemented features
 
-The `autoFit` feature (enabled by default) automatically scales PDFs to fit your container:
+- Continuous pages with canvas rendering when pages enter the viewport.
+- High-DPI canvas rendering and selectable text.
+- Auto-fit on container width changes, page navigation, zoom, and quarter-turn rotation.
+- External links and named/object-reference internal destinations.
+- Case-insensitive substring search within individual PDF text items; navigation to the first match and highlighting on rendered pages.
+- Lazy page thumbnails with bounded rendering concurrency and nested bookmark navigation.
+- Interactive AcroForm text/textarea, checkbox, radio, and choice widgets; field edits survive rerendering and are included in downloads/printing.
+- Password prompts for encrypted documents, incorrect-password retry, and cancellation.
+- PDF download and browser-dependent printing.
+- Document load/error and current-page events.
 
-- **Responsive**: Adapts to container width changes
-- **Scale bounds**: Between 10% and 300% for readability  
-- **Container-aware**: Calculates optimal zoom based on available space
+## Options
 
-### Important: Auto-Fit vs Manual Zoom Interaction
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `height`, `width` | `500px`, `100%` | Viewer dimensions |
+| `autoFit` | `true` | Fit the first page's width to the container |
+| `initialZoom` | unset | Explicit initial zoom disables auto-fit |
+| `initialPage` | `1` | Clamped to the document's page range |
+| `showControls` | `false` | Show the toolbar |
+| `showNavigation`, `showZoomControls`, `showRotationControls` | `true` | Toolbar groups |
+| `showDownloadButton`, `showPrintButton`, `showSearchBar` | `true` | Toolbar actions |
+| `renderTextLayer`, `enableTextSelection` | `true` | Both must be enabled to create selectable text |
+| `renderAnnotationLayer` | `true` | Links and AcroForm widgets |
+| `renderForms` | `true` | Render interactive AcroForm fields; requires annotation layer |
+| `workerSrc` | matching CDN worker | Override the PDF.js worker URL |
+| `showThumbnails`, `showOutline` | `false` | Open page previews or nested bookmarks; toolbar buttons also toggle these panels |
 
-⚠️ **When `autoFit: true` (default), manual zoom controls may not work as expected:**
+Manual zoom disables auto-fit until the source or options change. Zoom is limited to 10–500%; auto-fit is limited to 10–300%. PDF page rotation is preserved in addition to the viewer's rotation.
 
-```typescript
-// With auto-fit enabled (default):
-pdfOptions: PdfOptions = {
-  showControls: true,     // Shows zoom controls
-  autoFit: true          // But auto-fit overrides manual changes!
-};
-```
+## Workers and offline deployment
 
-### Solutions:
+By default, PDF.js uses an exact-version worker from unpkg. This requires network access and compatible CSP. For offline use or a strict CSP, serve `node_modules/pdfjs-dist/build/pdf.worker.mjs` from your own assets and set `workerSrc` to its URL. Worker and library versions must match. This setting affects PDF.js globally; viewers must use the same PDF.js version.
 
-**Option 1: Disable Auto-Fit for Manual Control**
-```typescript
-pdfOptions: PdfOptions = {
-  autoFit: false,         // Disable auto-fit
-  initialZoom: 1.0,       // Set desired zoom
-  showControls: true      // Manual controls work normally
-};
-```
+Global configuration is available through `NgPdfRendererConfigService.setConfig({ workerSrc })` before the first load. A viewer's `options.workerSrc` can also select the worker. Reconfigure the global service rather than mutating the returned configuration object.
 
-**Option 2: Use Auto-Fit Only (Recommended)**
-```typescript
-pdfOptions: PdfOptions = {
-  autoFit: true,          // Let auto-fit handle everything
-  showControls: false     // Hide manual controls to avoid confusion
-  // PDF scales automatically - no manual intervention needed
-};
-```
+### Copy and configure a local worker
 
-## 📱 Container CSS Best Practices
+Add this entry to your application's `build.options.assets` in `angular.json`:
 
-```css
-/* ✅ Good - Let the PDF scale naturally */
-.pdf-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* ❌ Avoid - These can cause rendering issues */
-.pdf-container {
-  overflow: hidden;         /* Can cut off content */
-  height: 400px;           /* Fixed height without overflow: auto */
-  max-width: 300px;        /* Too restrictive */
+```json
+{
+  "glob": "pdf.worker.mjs",
+  "input": "node_modules/pdfjs-dist/build",
+  "output": "assets/pdfjs"
 }
 ```
 
-## 🔧 Advanced Features
-
-### Event Handling
+Set it before the first viewer loads in your `app.config.ts`:
 
 ```typescript
-@Component({
-  template: `
-    <ng-pdf-viewer 
-      [src]=\"pdfUrl\"
-      (pageChange)=\"onPageChange($event)\"
-      (documentLoaded)=\"onDocumentLoaded($event)\"
-      (documentLoadError)=\"onError($event)\">
-    </ng-pdf-viewer>
-  `
-})
-export class AdvancedPdfComponent {
-  onPageChange(pageNumber: number) {
-    console.log(`User navigated to page ${pageNumber}`);
-  }
-  
-  onDocumentLoaded(document: any) {
-    console.log(`PDF loaded with ${document.numPages} pages`);
-  }
-  
-  onError(error: any) {
-    console.error('PDF loading failed:', error);
-  }
-}
-```
+import { ApplicationConfig, inject, provideAppInitializer } from '@angular/core';
+import { NgPdfRendererConfigService } from 'ng-pdf-renderer';
 
-### Loading from Different Sources
-
-```typescript
-export class PdfSourcesComponent {
-  // Local file
-  localPdf = '/assets/document.pdf';
-  
-  // External URL
-  externalPdf = 'https://example.com/document.pdf';
-  
-  // Base64 data
-  base64Pdf = 'data:application/pdf;base64,JVBERi0xLjQK...';
-  
-  // Uint8Array (from file upload)
-  arrayBuffer: Uint8Array;
-  
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file.type === 'application/pdf') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.arrayBuffer = new Uint8Array(e.target?.result as ArrayBuffer);
-      };
-      reader.readAsArrayBuffer(file);
-    }
-  }
-}
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**PDF not displaying:**
-```typescript
-// Check console for errors
-// Ensure PDF URL is accessible
-// Verify CORS headers for external PDFs
-```
-
-**Text selection not working:**
-```typescript
-pdfOptions: PdfOptions = {
-  enableTextSelection: true,  // Ensure this is true
-  renderTextLayer: true       // Required for text selection
+export const appConfig: ApplicationConfig = {
+  providers: [provideAppInitializer(() => {
+    inject(NgPdfRendererConfigService).setConfig({
+      workerSrc: new URL('assets/pdfjs/pdf.worker.mjs', document.baseURI).href
+    });
+  })]
 };
 ```
 
-**Manual zoom controls not responding:**
-```typescript
-pdfOptions: PdfOptions = {
-  autoFit: false,             // Disable auto-fit
-  showControls: true,         // Show controls
-  initialZoom: 1.0            // Set desired zoom
-};
+This example is for browser applications. The relative URL respects the application's base path. If serving assets elsewhere, use that URL instead. No global viewer stylesheet is needed; the component owns its rendering styles.
+
+## Events
+
+| Output | Value |
+| --- | --- |
+| `documentLoaded` | Loaded PDF.js document proxy |
+| `documentLoadError` | Load, navigation, rendering or action error |
+| `pageChange` | Current page number |
+
+## Compatibility
+
+- Angular 22.2.x; Angular common, core, and forms plus RxJS are peer dependencies.
+- Angular's compiler currently requires TypeScript 6.0.x. TypeScript 7 is incompatible.
+- Node: `^22.22.3 || ^24.15.0 || >=26.0.0` for this workspace/toolchain.
+- Modern browsers supported by Angular 22 and PDF.js 6. Browser verification currently covers Chrome.
+- SSR/hydration support is not certified. Rendering requires browser DOM/canvas APIs, and PDF.js is imported eagerly.
+
+## Forms and encrypted PDFs
+
+AcroForm field edits are stored in PDF.js annotation storage. `PdfService.getDocumentData()` returns bytes including those edits, and the built-in Download/Print actions use those bytes. Changing zoom, rotation, options, or panel visibility preserves edits. Replacing the source starts a new document and clears old state. Use `renderForms: false` for a static view.
+
+Password prompts appear automatically, with keyboard focus, incorrect-password feedback, retry, and Cancel/Escape. Password values are cleared on submission; the viewer does not persist them. Service consumers can subscribe to `passwordRequest$`, call `submitPassword(value)`, and cancel by calling `clearDocument()`.
+
+## Current limitations
+
+XFA forms, signature editing/verification, PDF JavaScript actions/calculations, push-button actions, comment editing, custom HTTP headers/credentials, search result counts/next/previous, and matching across text-item boundaries are not implemented. PDF.js can supply several of these capabilities, but this wrapper does not expose them yet.
+
+Rendering is lazy, but page metadata is fetched sequentially for every placeholder and visited canvases remain in memory. Very large documents need bounded rendering concurrency and canvas eviction. Printing uses the browser's embedded PDF support and needs cross-browser validation. Tagged-PDF accessibility and screen-reader reading order require further work.
+
+See `PROJECT_REVIEW.md` in the source repository for the review and roadmap.
+
+## Development
+
+```bash
+npm ci
+npm run build
+npm run build:demo
+npx playwright install chromium
+npm run test:ci
 ```
 
-**PDF too large/small:**
-```typescript
-pdfOptions: PdfOptions = {
-  autoFit: true,              // Let auto-fit handle sizing
-  initialZoom: undefined      // Don't override auto-fit
-};
-```
+To use an already installed Chrome browser, set `CHROME_BIN` to its executable instead of installing Chromium. Tests run in a real browser and include a small self-contained PDF; test rendering does not depend on a CDN.
 
-**Performance issues:**
-```typescript
-pdfOptions: PdfOptions = {
-  renderAnnotationLayer: false,  // Disable if not needed
-  showThumbnails: false          // Disable heavy features
-};
-```
-
-## 🔧 Browser Support
-
-- **Chrome**: 90+ ✅
-- **Firefox**: 88+ ✅  
-- **Safari**: 14+ ✅
-- **Edge**: 90+ ✅
-
-## 📋 Requirements
-
-- **Angular**: 19.1.0 or higher
-- **Node.js**: 18.0.0 or higher
-- **TypeScript**: 5.0 or higher
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-MIT © [askinjohn](https://github.com/askinjohn)
-
-## 🔗 Links
-
-- [GitHub Repository](https://github.com/askinjohn/ng-pdf-renderer)
-- [npm Package](https://www.npmjs.com/package/ng-pdf-renderer)
-- [Issue Tracker](https://github.com/askinjohn/ng-pdf-renderer/issues)
-- [PDF.js Documentation](https://mozilla.github.io/pdf.js/)
-
----
-
-**Made with ❤️ for the Angular community**
+The demo's `/features` route includes local form/bookmark and password-protected fixtures. Its worker is served locally from `/assets/pdfjs/pdf.worker.mjs`, so the feature demo does not depend on a CDN. Regenerate the synthetic fixtures with `python3 projects/ng-pdf-renderer/src/testing/build-fixtures.py` if needed (requires the development-only Python package `pypdf`).

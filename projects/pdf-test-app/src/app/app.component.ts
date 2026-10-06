@@ -1,16 +1,17 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, Router } from '@angular/router';
+import { RouterOutlet, Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [CommonModule, RouterOutlet],
   template: `
     <div class="app-container">
       <nav class="navigation">
         <h1>🔬 ng-pdf-renderer Test Suite</h1>
         <div class="nav-buttons">
+          <button [class.active]="isActiveRoute('/features')" (click)="navigate('/features')" class="nav-btn">PDF Features</button>
           <button 
             [class.active]="isActiveRoute('/simple')"
             (click)="navigate('/simple')"
@@ -41,7 +42,7 @@ import { RouterOutlet, RouterLink, Router } from '@angular/router';
   styles: [`
     .app-container {
       min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #f1f5f9; color:#1e293b; font-family:system-ui, sans-serif;
     }
     
     .navigation {
@@ -99,7 +100,7 @@ import { RouterOutlet, RouterLink, Router } from '@angular/router';
     @media (max-width: 768px) {
       .nav-buttons {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
       }
     }
   `]

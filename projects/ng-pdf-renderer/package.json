@@ -1,14 +1,14 @@
 {
   "name": "ng-pdf-renderer",
-  "version": "1.1.2",
+  "version": "2.0.0",
   "description": "A modern, zero-configuration PDF viewer for Angular applications with auto-fit, text selection, and responsive design",
   "keywords": [
-    "angular", 
-    "pdf", 
-    "viewer", 
-    "renderer", 
-    "pdf.js", 
-    "angular19",
+    "angular",
+    "pdf",
+    "viewer",
+    "renderer",
+    "pdf.js",
+    "angular22",
     "ng-pdf",
     "zero-config",
     "responsive",
@@ -30,15 +30,17 @@
     "url": "https://github.com/askinjohn/ng-pdf-renderer/issues"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
     "npm": ">=8.0.0"
   },
   "peerDependencies": {
-    "@angular/common": "^19.1.0",
-    "@angular/core": "^19.1.0"
+    "@angular/common": "^22.2.1",
+    "@angular/core": "^22.2.1",
+    "@angular/forms": "^22.2.1",
+    "rxjs": "^7.8.2"
   },
   "dependencies": {
-    "pdfjs-dist": "^3.11.174",
-    "tslib": "^2.3.0"
+    "pdfjs-dist": "^6.4.299",
+    "tslib": "^2.8.1"
   }
 }

@@ -1,8 +1,9 @@
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, inject, OnDestroy } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 // Import PDF.js library
 import * as pdfjsLib from 'pdfjs-dist';
 
+import { PdfPasswordRequest } from '../models/pdf-options.model';
 import { NgPdfRendererConfigService } from '../ng-pdf-renderer.config';
 
 /**
@@ -12,7 +13,33 @@ import { NgPdfRendererConfigService } from '../ng-pdf-renderer.config';
 @Injectable({
   providedIn: 'root'
 })
-export class PdfService {
+export class PdfService implements OnDestroy {
+  private loadingTask: any = null;
+  private loadVersion = 0;
+  private passwordCallback: ((password: string) => void) | null = null;
+  private passwordRequestSubject = new BehaviorSubject<PdfPasswordRequest | null>(null);
+  passwordRequest$ = this.passwordRequestSubject.asObservable();
+
+  submitPassword(password: string): void {
+    const callback = this.passwordCallback;
+    if (!callback) return;
+    this.passwordCallback = null;
+    this.passwordRequestSubject.next(null);
+    callback(password);
+  }
+
+  private resetPasswordRequest(): void {
+    this.passwordCallback = null;
+    this.passwordRequestSubject.next(null);
+  }
+
+  /** Serialize edited AcroForm fields, or return the original bytes for an unedited PDF. */
+  async getDocumentData(): Promise<Uint8Array<ArrayBuffer> | null> {
+    const document = this.getCurrentDocument();
+    if (!document) return null;
+    const data = await (document.annotationStorage?.size ? document.saveDocument() : document.getData());
+    return new Uint8Array(data);
+  }
   // BehaviorSubjects to track PDF state (these emit current value on subscription)
   private pdfDocumentSubject = new BehaviorSubject<any>(null);  // Holds the PDF document object
   pdfDocument$ = this.pdfDocumentSubject.asObservable();        // Observable for components to subscribe to
@@ -51,18 +78,16 @@ export class PdfService {
       setViewer: (viewer: any) => {
         this._viewer = viewer;
       },
-      navigateTo: (dest: any) => {
-        //console.log('Navigate to:', dest);
-        if (dest && typeof dest === 'object' && dest.length > 0) {
-          if (dest[0] && typeof dest[0] === 'object' && 'num' in dest[0]) {
-            // Navigate to page
-            const pageNumber = dest[0].num + 1;
-            this.setCurrentPage(pageNumber);
-            if (this._viewer && this._viewer.scrollPageIntoView) {
-              this._viewer.scrollPageIntoView({ pageNumber });
-            }
-          }
-        }
+      navigateTo: async (dest: any) => {
+        const document = this._pdfDocument;
+        if (!document) return;
+        const destination = typeof dest === 'string' ? await document.getDestination(dest) : dest;
+        if (!Array.isArray(destination)) return;
+        const ref = destination[0];
+        const index = typeof ref === 'number' ? ref : await document.getPageIndex(ref);
+        if (document !== this._pdfDocument) return;
+        this.setCurrentPage(index + 1);
+        this._viewer?.scrollPageIntoView({ pageNumber: index + 1 });
       },
       getDestinationHash: (dest: any) => {
         return `page=${dest}`;
@@ -94,18 +119,11 @@ export class PdfService {
    * This eliminates the need for users to manually copy worker files
    */
   private configureWorkerSource(): void {
-    // First, check if workerSrc is already set
-    if (pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      //console.log('Worker already set:', pdfjsLib.GlobalWorkerOptions.workerSrc);
-      return;
-    }
-    
-    // If workerSrc is provided in the config, use it
     if (this.configService.config.workerSrc) {
-      //console.log(`Setting worker from config: ${this.configService.config.workerSrc}`);
       pdfjsLib.GlobalWorkerOptions.workerSrc = this.configService.config.workerSrc;
       return;
     }
+    if (pdfjsLib.GlobalWorkerOptions.workerSrc) return;
 
     // Get the current PDF.js version
     const pdfVersion = pdfjsLib.version;
@@ -130,42 +148,60 @@ export class PdfService {
    * @returns Promise resolving to the loaded PDF document
    */
   async loadDocument(src: string | Uint8Array): Promise<any> {
-    try {
-      //console.log('PDF.js worker source:', pdfjsLib.GlobalWorkerOptions.workerSrc || 'NOT SET');
-      //console.log(`Loading document from: ${typeof src === 'string' ? src : 'Binary data'}`);
-      
-      // Create a PDF loading task
-      const loadingTask = pdfjsLib.getDocument(src);
-      
-      // Add progress tracking
-      loadingTask.onProgress = (progressData: { loaded: number, total: number }) => {
-        const progress = (progressData.loaded / progressData.total) * 100;
-        //console.log(`Loading PDF: ${progress.toFixed(2)}%`);
-      };
-      
-      // Wait for the document to load
-      //console.log('Waiting for PDF document to load...');
-      const pdfDocument = await loadingTask.promise;
-      //console.log(`PDF document loaded with ${pdfDocument.numPages} pages`);
-      
-      // Update subjects with the loaded document info
-      this.pdfDocumentSubject.next(pdfDocument);
-      this.totalPagesSubject.next(pdfDocument.numPages);
-      this.currentPageSubject.next(1);  // Reset to first page
-      
-      // Configure link service with the document
-      this.linkService.setDocument(pdfDocument);
-      this.linkService.setViewer({
-        scrollPageIntoView: ({ pageNumber }: { pageNumber: number }) => {
-          this.setCurrentPage(pageNumber);
-        }
-      });
-      
-      return pdfDocument;
-    } catch (error) {
-      //console.error('Error loading PDF document:', error);
-      throw error; // Re-throw to allow component to handle it
-    }
+    const version = ++this.loadVersion;
+    this.resetPasswordRequest();
+    const previousTask = this.loadingTask;
+    this.loadingTask = null;
+    this.pdfDocumentSubject.next(null);
+    this.totalPagesSubject.next(0);
+    this.currentPageSubject.next(1);
+    this.linkService.setDocument(null);
+    await previousTask?.destroy();
+    if (version !== this.loadVersion) throw new Error('PDF loading cancelled');
+    this.configureWorkerSource();
+    const task = pdfjsLib.getDocument({
+      ...(typeof src === 'string' ? { url: src } : { data: src.slice() })
+    });
+    this.loadingTask = task;
+    task.onPassword = (updatePassword: (password: string) => void, reason: number) => {
+      if (version !== this.loadVersion) return;
+      this.passwordCallback = updatePassword;
+      this.passwordRequestSubject.next({ incorrect: reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD });
+    };
+    const pdfDocument = await task.promise;
+    if (version !== this.loadVersion) throw new Error('PDF loading cancelled');
+    this.resetPasswordRequest();
+    this.pdfDocumentSubject.next(pdfDocument);
+    this.totalPagesSubject.next(pdfDocument.numPages);
+    this.linkService.setDocument(pdfDocument);
+    return pdfDocument;
+  }
+
+  async clearDocument(): Promise<void> {
+    ++this.loadVersion;
+    this.resetPasswordRequest();
+    const task = this.loadingTask;
+    this.loadingTask = null;
+    this.pdfDocumentSubject.next(null);
+    this.totalPagesSubject.next(0);
+    this.currentPageSubject.next(1);
+    this.linkService.setDocument(null);
+    await task?.destroy();
+  }
+
+  ngOnDestroy(): void {
+    ++this.loadVersion;
+    this.resetPasswordRequest();
+    void this.loadingTask?.destroy();
+    this.loadingTask = null;
+    this.linkService.setDocument(null);
+    this.pdfDocumentSubject.next(null);
+    this.pdfDocumentSubject.complete();
+    this.currentPageSubject.complete();
+    this.totalPagesSubject.complete();
+    this.zoomSubject.complete();
+    this.rotationSubject.complete();
+    this.passwordRequestSubject.complete();
   }
 
   /**
@@ -175,7 +211,7 @@ export class PdfService {
   setCurrentPage(pageNumber: number): void {
     const totalPages = this.totalPagesSubject.value;
     // Ensure page number is within valid range
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
+    if (Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages && pageNumber !== this.currentPageSubject.value) {
       this.currentPageSubject.next(pageNumber);
     }
   }
@@ -206,7 +242,7 @@ export class PdfService {
    * @param zoom The zoom level (1 = 100%)
    */
   setZoom(zoom: number): void {
-    this.zoomSubject.next(zoom);
+    if (Number.isFinite(zoom) && zoom > 0) this.zoomSubject.next(Math.max(0.1, Math.min(zoom, 5)));
   }
 
   /**
@@ -214,7 +250,7 @@ export class PdfService {
    */
   zoomIn(): void {
     const currentZoom = this.zoomSubject.value;
-    this.zoomSubject.next(currentZoom * 1.2);
+    this.setZoom(currentZoom * 1.2);
   }
 
   /**
@@ -222,7 +258,7 @@ export class PdfService {
    */
   zoomOut(): void {
     const currentZoom = this.zoomSubject.value;
-    this.zoomSubject.next(currentZoom / 1.2);
+    this.setZoom(currentZoom / 1.2);
   }
 
   /**
@@ -230,6 +266,7 @@ export class PdfService {
    * @param degrees The degrees to rotate (positive = clockwise, negative = counterclockwise)
    */
   rotate(degrees: number): void {
+    if (!Number.isFinite(degrees) || degrees % 90 !== 0) return;
     const currentRotation = this.rotationSubject.value;
     // Calculate new rotation and keep it within 0-359 degrees
     let newRotation = (currentRotation + degrees) % 360;
@@ -249,7 +286,7 @@ export class PdfService {
       return Promise.resolve([]);
     }
     // Get outline or return empty array if not available
-    return pdfDocument.getOutline() || Promise.resolve([]);
+    return pdfDocument.getOutline().then((outline: any[] | null) => outline ?? []);
   }
 
   /**
@@ -278,6 +315,7 @@ export class PdfService {
       
       // Render the page to the canvas
       await page.render({
+        canvas,
         canvasContext: context,
         viewport
       }).promise;
@@ -302,6 +340,7 @@ export class PdfService {
       return [];
     }
 
+    if (!text.trim()) return [];
     const results: any[] = [];
     const totalPages = pdfDocument.numPages;
 
@@ -315,7 +354,7 @@ export class PdfService {
         // Search through text items on the page
         for (let i = 0; i < textItems.length; i++) {
           const item = textItems[i];
-          if (item.str.toLowerCase().includes(text.toLowerCase())) {
+          if (typeof item.str === 'string' && item.str.toLowerCase().includes(text.toLowerCase())) {
             results.push({
               pageNumber: pageNum,
               text: item.str,
@@ -344,7 +383,7 @@ export class PdfService {
     
     try {
       // Get the binary data of the PDF
-      const url = pdfDocument.getData ? await pdfDocument.getData() : null;
+      const url = await this.getDocumentData();
       
       if (url) {
         // Create a blob from binary data
@@ -374,12 +413,12 @@ export class PdfService {
         
         // Clean up DOM and revoke blob URL
         document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
       } else {
         //console.error('Unable to download: PDF data not available');
       }
     } catch (error) {
-      //console.error('Error downloading PDF:', error);
+      throw error;
     }
   }
 
@@ -392,47 +431,32 @@ export class PdfService {
       return;
     }
     
-    try {
-      // Create hidden iframe to load PDF for printing
-      const printIframe = document.createElement('iframe');
-      printIframe.style.position = 'absolute';
-      printIframe.style.top = '-1000px';
-      printIframe.style.left = '-1000px';
-      printIframe.style.width = '0';
-      printIframe.style.height = '0';
-      document.body.appendChild(printIframe);
-      
-      // Get PDF data and create a blob URL
-      const data = await pdfDocument.getData();
-      const blob = new Blob([data], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Load PDF into iframe
-      printIframe.src = blobUrl;
-      
-      // Once iframe is loaded, trigger print dialog
-      printIframe.onload = () => {
-        try {
-          if (printIframe.contentWindow) {
-            // Focus and print the iframe content
-            printIframe.contentWindow.focus();
-            printIframe.contentWindow.print();
-          }
-        } catch (error) {
-          //console.error('Error printing PDF:', error);
-          
-          // Fallback: open in new tab for user to print
-          window.open(blobUrl, '_blank');
-        } finally {
-          // Clean up resources (after delay to allow for printing)
-          setTimeout(() => {
-            document.body.removeChild(printIframe);
-            URL.revokeObjectURL(blobUrl);
-          }, 1000);
-        }
-      };
-    } catch (error) {
-      //console.error('Error setting up PDF print:', error);
-    }
+    // Obtain data before inserting DOM resources so loading failures cannot leak iframes.
+    const data = await this.getDocumentData();
+    if (!data) return;
+    const blobUrl = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+    const iframe = document.createElement('iframe');
+    iframe.title = 'PDF print preview';
+    iframe.style.cssText = 'position:fixed;left:-10000px;width:1px;height:1px';
+    const cleanup = () => {
+      clearTimeout(timeout);
+      iframe.remove();
+      URL.revokeObjectURL(blobUrl);
+    };
+    const timeout = setTimeout(cleanup, 60000);
+    iframe.onerror = cleanup;
+    iframe.onload = () => {
+      try {
+        const target = iframe.contentWindow;
+        if (!target) { cleanup(); return; }
+        target.addEventListener('afterprint', cleanup, { once: true });
+        target.focus();
+        target.print();
+      } catch {
+        window.open(blobUrl, '_blank', 'noopener');
+      }
+    };
+    iframe.src = blobUrl;
+    document.body.appendChild(iframe);
   }
 }

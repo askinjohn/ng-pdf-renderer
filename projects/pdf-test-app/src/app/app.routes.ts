@@ -4,6 +4,7 @@ import { NpmTestComponent } from './npm-test.component';
 import { CleanTestComponent } from './clean-test.component';
 
 export const routes: Routes = [
+  { path: 'features', loadComponent: () => import('./features-demo.component').then(module => module.FeaturesDemoComponent) },
   { path: '', redirectTo: '/simple', pathMatch: 'full' },
   { path: 'simple', component: SimpleTestComponent },
   { path: 'npm', component: NpmTestComponent },
