@@ -2,7 +2,7 @@
 
 ## Scope and release state
 
-This is an Angular 22.2 workspace containing an unreleased 2.0.0 library and a demo. Read README.md and PROJECT_REVIEW.md before changing behavior. The published npm package may differ from this source. Keep changes scoped; preserve existing uncommitted work.
+This is an Angular 22.2 workspace containing the 2.0.0 library (published to npm) and a demo. Read README.md and the limitations in projects/ng-pdf-renderer/README.md before changing behavior. The published npm package may differ from this source. Keep changes scoped; preserve existing uncommitted work.
 
 ## Entry points
 
@@ -22,6 +22,8 @@ This is an Angular 22.2 workspace containing an unreleased 2.0.0 library and a d
 Use npm ci and the committed lockfile. npm start builds the library before serving the demo. The demo resolves the library from dist; rebuild after library edits and restart the server if a rebuild invalidates module resolution. npm run watch explicitly watches the library.
 
 Run npm run check after behavioral changes. Install Chromium with npx playwright install chromium, or set CHROME_BIN to an installed Chrome executable. Use actual browser rendering tests for PDF regressions, with deterministic local fixtures. Check relevant UI visually, including keyboard focus and narrow screens. Do not claim browser/PDF coverage beyond what was verified.
+
+For manual regression checks, verify thumbnail/bookmark navigation, form edits after zoom or rotation, downloaded values, password retry/cancellation, Enter-to-search, keyboard focus, and narrow-screen layouts. Use /simple to check auto-fit and hidden-toolbar defaults.
 
 ## Implementation constraints
 

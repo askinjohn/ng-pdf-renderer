@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 2.0.0
+## [2.0.0] - 2026-10-17
 
 - Breaking: target Angular 22.2 and PDF.js 6; Angular 19 consumers must stay on the previous release.
 - Upgrade workspace tooling to current Angular builders, TypeScript 6.0, and browser-based Vitest.

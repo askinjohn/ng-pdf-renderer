@@ -1,20 +1,22 @@
 {
   "name": "ng-pdf-renderer",
   "version": "2.0.0",
-  "description": "A modern, zero-configuration PDF viewer for Angular applications with auto-fit, text selection, and responsive design",
+  "description": "Standalone Angular PDF viewer with thumbnails, bookmarks, fillable forms, search, and password-protected PDF support.",
   "keywords": [
     "angular",
-    "pdf",
-    "viewer",
-    "renderer",
+    "angular-pdf-viewer",
+    "pdf-viewer",
+    "pdfjs",
     "pdf.js",
-    "angular22",
-    "ng-pdf",
-    "zero-config",
-    "responsive",
-    "auto-fit",
-    "text-selection",
-    "standalone"
+    "pdf",
+    "standalone",
+    "typescript",
+    "pdf-forms",
+    "acroform",
+    "thumbnails",
+    "bookmarks",
+    "password-protected-pdf",
+    "text-selection"
   ],
   "author": {
     "name": "askinjohn",
@@ -24,7 +26,7 @@
   "homepage": "https://github.com/askinjohn/ng-pdf-renderer#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/askinjohn/ng-pdf-renderer.git"
+    "url": "git+https://github.com/askinjohn/ng-pdf-renderer.git"
   },
   "bugs": {
     "url": "https://github.com/askinjohn/ng-pdf-renderer/issues"

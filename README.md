@@ -1,31 +1,29 @@
 # ng-pdf-renderer
 
-An Angular PDF viewer powered by PDF.js, with selectable text, page navigation, zoom, rotation, search, thumbnails, nested bookmarks, fillable AcroForms, and password prompts.
+A standalone Angular PDF viewer powered by PDF.js. Display documents with selectable text, navigation, search, thumbnails, bookmarks, and fillable forms.
 
-**Release status:** this repository contains unreleased version 2.0.0 targeting Angular 22.2 and PDF.js 6. Installing from npm may give you an older release with different compatibility and features. The source upgrade needs a major release.
+[npm](https://www.npmjs.com/package/ng-pdf-renderer) · [API reference](./projects/ng-pdf-renderer/README.md) · [Changelog](./projects/ng-pdf-renderer/CHANGELOG.md) · [Issues](https://github.com/askinjohn/ng-pdf-renderer/issues)
 
-## Run the project
+## Features
 
-Use Node `^22.22.3 || ^24.15.0 || >=26.0.0` and run these commands from the repository root:
+- Responsive page fitting, zoom, and rotation
+- Text selection, search, and document links
+- Page thumbnails and nested bookmarks
+- AcroForm fields with edits preserved in downloads
+- Password prompts for encrypted PDFs
+- Download and browser printing
 
-```bash
-npm ci
-npm start
-```
-
-`npm start` builds the library first, then serves the demo. Open [the feature demo](http://localhost:4200/features). The demo uses local PDFs and a local PDF.js worker. The encrypted sample password is `viewer-test`.
-
-After editing library source, stop the demo and run `npm start` again. For continuous library builds, use `npm run watch` in another terminal after the initial build. If rebuilding removes the output briefly and the demo reports it cannot resolve `ng-pdf-renderer`, restart the demo.
-
-## Use the viewer
-
-For a published version compatible with your Angular application:
+## Installation
 
 ```bash
 npm install ng-pdf-renderer
 ```
 
-For this unreleased source, run `npm run build`, then install the resulting `dist/ng-pdf-renderer` directory into your Angular 22 application.
+> Version 2.0.0 requires Angular `^22.2.1`. For earlier Angular versions, use a compatible previous release.
+
+## Quick start
+
+Import the standalone component and provide a PDF URL or `Uint8Array`:
 
 ```typescript
 import { Component } from '@angular/core';
@@ -34,43 +32,55 @@ import { PdfViewerComponent, type PdfOptions } from 'ng-pdf-renderer';
 @Component({
   selector: 'app-document',
   imports: [PdfViewerComponent],
-  template: `<ng-pdf-viewer [src]="source" [options]="options"
-    (documentLoadError)="onError($event)" />`
+  template: `
+    <ng-pdf-viewer [src]="source" [options]="options" />
+  `,
 })
 export class DocumentComponent {
-  source = '/assets/document.pdf';
-  options: PdfOptions = { height: '600px', showControls: true,
-    showThumbnails: true, showOutline: true };
-  onError(error: unknown) { console.error(error); }
+  source = '/documents/example.pdf';
+  options: PdfOptions = {
+    height: '600px',
+    showControls: true,
+    showThumbnails: true,
+    showOutline: true,
+  };
 }
 ```
 
-Place the PDF at the served URL. URL sources need CORS permission when hosted on another origin; `Uint8Array` sources are also supported. Controls are hidden by default. Replace the options object when changing settings.
+Serve your PDF at the specified URL. Documents hosted on another origin must allow CORS. The toolbar is hidden by default; set `showControls: true` to enable it.
 
-The default worker downloads from unpkg and needs network/CSP permission. For offline deployments, follow the [local worker configuration](./projects/ng-pdf-renderer/README.md#workers-and-offline-deployment). No global PDF.js stylesheet is required for the component.
+The PDF.js worker loads from a version-matched CDN by default. For offline use or a strict Content Security Policy, [serve the worker locally](./projects/ng-pdf-renderer/README.md#worker-configuration). No global viewer stylesheet is required.
 
-## Validate changes
+## Documentation
+
+See the [configuration reference](./projects/ng-pdf-renderer/README.md) for options, events, worker setup, and supported PDF features.
+
+## Development
+
+Use a supported Node version: `^22.22.3 || ^24.15.0 || >=26.0.0`.
+
+```bash
+npm ci
+npm start
+```
+
+Open [localhost:4200/features](http://localhost:4200/features) to try forms, bookmarks, and encrypted PDFs. The encrypted sample password is `viewer-test`. Startup builds the local library and serves the demo with a local worker.
+
+To run both production builds and the browser tests:
 
 ```bash
 npx playwright install chromium
 npm run check
 ```
 
-`check` builds the library and demo, then runs the real-browser Vitest suite once. To use installed Chrome instead of downloading Chromium, set `CHROME_BIN` to its executable. On macOS:
+You can set `CHROME_BIN` to an installed Chrome executable instead of downloading Chromium. For library changes, run `npm run watch` in a separate terminal; restart the demo if a rebuild interrupts package resolution.
 
-```bash
-CHROME_BIN='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run check
-```
+See the [contributor guide](./AGENTS.md) for development guidance and the [configuration reference](./projects/ng-pdf-renderer/README.md#limitations) for current limitations.
 
-Tests use generated local PDF fixtures. Existing demo bundle/style budget warnings are recorded in the [project review](./PROJECT_REVIEW.md). A passing suite is not a guarantee that every PDF format or browser is supported.
+## Support
 
-## Project map
+Found a problem? [Open an issue](https://github.com/askinjohn/ng-pdf-renderer/issues) with your Angular and package versions, browser, worker setup, and a minimal reproduction. Share only PDFs you have permission to make public.
 
-- [Library documentation](./projects/ng-pdf-renderer/README.md): options, compatibility, forms, workers, and limitations.
-- [Agent guidance](./AGENTS.md): entry points, development rules, and verification workflow.
-- [Manual testing guide](./DEFAULT-TESTING-README.md): demo routes and UI checks.
-- [Project review](./PROJECT_REVIEW.md): known gaps and release readiness.
-- `projects/ng-pdf-renderer/src/lib`: library components, service, configuration, and models.
-- `projects/pdf-test-app/src/app`: demo application.
+## License
 
 MIT © [askinjohn](https://github.com/askinjohn)

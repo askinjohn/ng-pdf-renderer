@@ -1,71 +1,88 @@
 # ng-pdf-renderer
 
-A standalone Angular PDF viewer backed by PDF.js. This workspace targets Angular 22 and PDF.js 6. The upgrade is unreleased and requires a major package release because Angular 19 applications cannot use this build.
+A standalone Angular PDF viewer powered by PDF.js, with navigation, selectable text, search, thumbnails, bookmarks, fillable forms, and password prompts.
+
+[npm](https://www.npmjs.com/package/ng-pdf-renderer) · [Source](https://github.com/askinjohn/ng-pdf-renderer) · [Issues](https://github.com/askinjohn/ng-pdf-renderer/issues)
 
 ## Installation
 
-For published releases, use `npm install ng-pdf-renderer` and check that release's Angular peer dependencies. This README describes unreleased source version 2.0.0. To try it locally, build the repository with `npm run build` and install its `dist/ng-pdf-renderer` directory into an Angular 22 application.
+```bash
+npm install ng-pdf-renderer
+```
+
+Version 2.0.0 requires Angular `^22.2.1` and RxJS `^7.8.2`. For earlier Angular versions, use a compatible previous release. Rendering requires browser DOM and canvas APIs. SSR and hydration support have not been verified.
 
 ## Usage
 
 ```typescript
 import { Component } from '@angular/core';
-import { PdfViewerComponent, PdfOptions } from 'ng-pdf-renderer';
+import { PdfViewerComponent, type PdfOptions } from 'ng-pdf-renderer';
 
 @Component({
   selector: 'app-document',
   imports: [PdfViewerComponent],
-  template: `<ng-pdf-viewer [src]="source" [options]="options"
-    (documentLoadError)="onError($event)" />`
+  template: `
+    <ng-pdf-viewer
+      [src]="source"
+      [options]="options"
+      (documentLoadError)="onError($event)"
+    />
+  `,
 })
 export class DocumentComponent {
-  source: string | Uint8Array = '/assets/document.pdf';
-  options: PdfOptions = { height: '600px', showControls: true, showThumbnails: true, showOutline: true };
-  onError(error: unknown) { console.error(error); }
+  source: string | Uint8Array = '/documents/example.pdf';
+  options: PdfOptions = {
+    height: '600px',
+    showControls: true,
+    showThumbnails: true,
+    showOutline: true,
+  };
+
+  onError(error: unknown): void {
+    console.error('Unable to display PDF:', error);
+  }
 }
 ```
 
-Each viewer owns its document, navigation, zoom, and rotation state. Replacing `src` reloads the document; use a new options object when changing settings. URL sources require appropriate CORS headers. Binary data is copied before being passed to PDF.js so the caller's buffer remains usable.
-
-## Implemented features
-
-- Continuous pages with canvas rendering when pages enter the viewport.
-- High-DPI canvas rendering and selectable text.
-- Auto-fit on container width changes, page navigation, zoom, and quarter-turn rotation.
-- External links and named/object-reference internal destinations.
-- Case-insensitive substring search within individual PDF text items; navigation to the first match and highlighting on rendered pages.
-- Lazy page thumbnails with bounded rendering concurrency and nested bookmark navigation.
-- Interactive AcroForm text/textarea, checkbox, radio, and choice widgets; field edits survive rerendering and are included in downloads/printing.
-- Password prompts for encrypted documents, incorrect-password retry, and cancellation.
-- PDF download and browser-dependent printing.
-- Document load/error and current-page events.
+Serve the PDF at the specified URL, or pass its bytes as a `Uint8Array`. Cross-origin URLs must allow CORS. Replacing `src` loads a new document; replace the options object when changing settings. Each viewer maintains independent document and navigation state.
 
 ## Options
 
-| Option | Default | Behavior |
+| Option | Default | Description |
 | --- | --- | --- |
-| `height`, `width` | `500px`, `100%` | Viewer dimensions |
+| `height` | `500px` | Viewer height |
+| `width` | `100%` | Viewer width |
 | `autoFit` | `true` | Fit the first page's width to the container |
-| `initialZoom` | unset | Explicit initial zoom disables auto-fit |
-| `initialPage` | `1` | Clamped to the document's page range |
+| `initialZoom` | — | Initial scale; `1` means 100%. Disables auto-fit when set. |
+| `initialPage` | `1` | Starting page, clamped to the document's range |
 | `showControls` | `false` | Show the toolbar |
-| `showNavigation`, `showZoomControls`, `showRotationControls` | `true` | Toolbar groups |
-| `showDownloadButton`, `showPrintButton`, `showSearchBar` | `true` | Toolbar actions |
-| `renderTextLayer`, `enableTextSelection` | `true` | Both must be enabled to create selectable text |
-| `renderAnnotationLayer` | `true` | Links and AcroForm widgets |
-| `renderForms` | `true` | Render interactive AcroForm fields; requires annotation layer |
-| `workerSrc` | matching CDN worker | Override the PDF.js worker URL |
-| `showThumbnails`, `showOutline` | `false` | Open page previews or nested bookmarks; toolbar buttons also toggle these panels |
+| `showNavigation` | `true` | Show page navigation in the toolbar |
+| `showZoomControls` | `true` | Show zoom controls in the toolbar |
+| `showRotationControls` | `true` | Show rotation controls in the toolbar |
+| `showDownloadButton` | `true` | Show the download action in the toolbar |
+| `showPrintButton` | `true` | Show the print action in the toolbar |
+| `showSearchBar` | `true` | Show search in the toolbar |
+| `showThumbnails` | `false` | Open the page preview panel |
+| `showOutline` | `false` | Open the bookmark panel |
+| `renderTextLayer` | `true` | Render the text layer |
+| `enableTextSelection` | `true` | Enable selection; requires the text layer |
+| `renderAnnotationLayer` | `true` | Render links and form annotations |
+| `renderForms` | `true` | Enable interactive AcroForms; requires annotations |
+| `workerSrc` | Version-matched CDN URL | Override the PDF.js worker location |
 
-Manual zoom disables auto-fit until the source or options change. Zoom is limited to 10–500%; auto-fit is limited to 10–300%. PDF page rotation is preserved in addition to the viewer's rotation.
+Manual zoom disables auto-fit until the source or options change. Zoom supports 10–500%; auto-fit supports 10–300%.
 
-## Workers and offline deployment
+## Events
 
-By default, PDF.js uses an exact-version worker from unpkg. This requires network access and compatible CSP. For offline use or a strict CSP, serve `node_modules/pdfjs-dist/build/pdf.worker.mjs` from your own assets and set `workerSrc` to its URL. Worker and library versions must match. This setting affects PDF.js globally; viewers must use the same PDF.js version.
+| Event | Value |
+| --- | --- |
+| `documentLoaded` | Loaded PDF.js document proxy |
+| `documentLoadError` | Load, navigation, rendering, or action error |
+| `pageChange` | Current page number |
 
-Global configuration is available through `NgPdfRendererConfigService.setConfig({ workerSrc })` before the first load. A viewer's `options.workerSrc` can also select the worker. Reconfigure the global service rather than mutating the returned configuration object.
+## Worker configuration
 
-### Copy and configure a local worker
+By default, the viewer loads a version-matched PDF.js worker from unpkg. This requires network access and permission under your application's Content Security Policy. To serve the worker locally:
 
 Add this entry to your application's `build.options.assets` in `angular.json`:
 
@@ -77,7 +94,7 @@ Add this entry to your application's `build.options.assets` in `angular.json`:
 }
 ```
 
-Set it before the first viewer loads in your `app.config.ts`:
+Add the initializer below to your existing `app.config.ts` providers:
 
 ```typescript
 import { ApplicationConfig, inject, provideAppInitializer } from '@angular/core';
@@ -94,46 +111,35 @@ export const appConfig: ApplicationConfig = {
 
 This example is for browser applications. The relative URL respects the application's base path. If serving assets elsewhere, use that URL instead. No global viewer stylesheet is needed; the component owns its rendering styles.
 
-## Events
+The worker must match the installed PDF.js version. Configuration applies globally to PDF.js; configure it before loading a document. You can also set `options.workerSrc` for the viewer. All viewers must use a compatible worker.
 
-| Output | Value |
+## Forms and passwords
+
+Text fields, multiline fields, checkboxes, radio buttons, and choice fields are supported. Edits survive zoom, rotation, and panel changes, and are included in downloads and printing. Thumbnails refresh after edits. Set `renderForms: false` for a static view. Loading a different source clears the previous document's edits.
+
+Encrypted documents prompt for a password, with retry and cancellation. Passwords are cleared on submission and are not persisted by the viewer.
+
+## Limitations
+
+- Search matches text within individual PDF text items. Cross-item matches, result counts, and next/previous result navigation are not supported.
+- XFA, signature editing or verification, PDF JavaScript, push-button actions, and comment editing are not supported.
+- Custom HTTP headers and credentials are not exposed by the loading API.
+- Visited page canvases remain in memory, so very large documents may use substantial memory.
+- Printing depends on the browser's PDF support. Automated browser coverage currently targets Chrome; other browsers, tagged-PDF reading order, and screen-reader accessibility need further validation.
+
+For source setup, tests, and contribution guidance, see the [GitHub repository](https://github.com/askinjohn/ng-pdf-renderer).
+
+## Troubleshooting
+
+| Problem | Check |
 | --- | --- |
-| `documentLoaded` | Loaded PDF.js document proxy |
-| `documentLoadError` | Load, navigation, rendering or action error |
-| `pageChange` | Current page number |
+| PDF does not load | Confirm the URL returns a PDF and the server permits CORS. Subscribe to `documentLoadError`. |
+| Worker fails to load | Check the worker URL, Content Security Policy, and matching PDF.js version. |
+| Toolbar is missing | Set `showControls: true`. |
+| Options do not update | Assign a new `PdfOptions` object rather than mutating the existing object. |
 
-## Compatibility
+Report issues with a minimal reproduction, Angular/package versions, and browser details. Remove private document content before sharing examples.
 
-- Angular 22.2.x; Angular common, core, and forms plus RxJS are peer dependencies.
-- Angular's compiler currently requires TypeScript 6.0.x. TypeScript 7 is incompatible.
-- Node: `^22.22.3 || ^24.15.0 || >=26.0.0` for this workspace/toolchain.
-- Modern browsers supported by Angular 22 and PDF.js 6. Browser verification currently covers Chrome.
-- SSR/hydration support is not certified. Rendering requires browser DOM/canvas APIs, and PDF.js is imported eagerly.
+## License
 
-## Forms and encrypted PDFs
-
-AcroForm field edits are stored in PDF.js annotation storage. `PdfService.getDocumentData()` returns bytes including those edits, and the built-in Download/Print actions use those bytes. Changing zoom, rotation, options, or panel visibility preserves edits. Replacing the source starts a new document and clears old state. Use `renderForms: false` for a static view.
-
-Password prompts appear automatically, with keyboard focus, incorrect-password feedback, retry, and Cancel/Escape. Password values are cleared on submission; the viewer does not persist them. Service consumers can subscribe to `passwordRequest$`, call `submitPassword(value)`, and cancel by calling `clearDocument()`.
-
-## Current limitations
-
-XFA forms, signature editing/verification, PDF JavaScript actions/calculations, push-button actions, comment editing, custom HTTP headers/credentials, search result counts/next/previous, and matching across text-item boundaries are not implemented. PDF.js can supply several of these capabilities, but this wrapper does not expose them yet.
-
-Rendering is lazy, but page metadata is fetched sequentially for every placeholder and visited canvases remain in memory. Very large documents need bounded rendering concurrency and canvas eviction. Printing uses the browser's embedded PDF support and needs cross-browser validation. Tagged-PDF accessibility and screen-reader reading order require further work.
-
-See `PROJECT_REVIEW.md` in the source repository for the review and roadmap.
-
-## Development
-
-```bash
-npm ci
-npm run build
-npm run build:demo
-npx playwright install chromium
-npm run test:ci
-```
-
-To use an already installed Chrome browser, set `CHROME_BIN` to its executable instead of installing Chromium. Tests run in a real browser and include a small self-contained PDF; test rendering does not depend on a CDN.
-
-The demo's `/features` route includes local form/bookmark and password-protected fixtures. Its worker is served locally from `/assets/pdfjs/pdf.worker.mjs`, so the feature demo does not depend on a CDN. Regenerate the synthetic fixtures with `python3 projects/ng-pdf-renderer/src/testing/build-fixtures.py` if needed (requires the development-only Python package `pypdf`).
+MIT © [askinjohn](https://github.com/askinjohn)
